@@ -1,0 +1,24 @@
+{
+  "author" : "Akarapas Wongkaew",
+  "commands" : [
+    {
+      "script" : "script.cocoascript",
+      "handler" : "onRun",
+      "shortcut" : "ctrl alt command b",
+      "name" : "🅱️ set Bound",
+      "identifier" : "🅱️ set Bound"
+    }
+  ],
+  "menu" : {
+    "items" : [
+      "🅱️ set Bound"
+    ],
+    "title" : "🅱️ set Bound"
+  },
+  "identifier" : "com.example.sketch.setBound",
+  "version" : 1.0,
+  "compatibleVersion": 3,
+  "description" : "selected layer(s) and draws a bound. ez game ez life.",
+  "authorEmail" : "",
+  "name" : "🅱️ set Bound"
+}

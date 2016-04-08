@@ -1,0 +1,191 @@
+var onRun = function(context) {
+	var doc            = context.document;
+	var selectedLayers = context.selection;
+	var selectedCount  = selectedLayers.count();
+	var firstLayer     = selectedLayers.firstObject();
+
+	// Plugin requires a selection to determine the contents of the box
+	if (selectedCount == 0) {
+		doc.displayMessage('No layer selected');
+	} else {
+		var artboard = firstLayer.parentGroup();
+		var alert    = buildDialog();
+    	var options  = handleAlertResponse(alert, alert.runModal());
+
+		if (options != null) {
+			if (selectedCount == 1) {
+				// Single layer selected
+				var posX   = firstLayer.frame().x();
+				var posY   = firstLayer.frame().y();
+				var width  = firstLayer.frame().width();
+				var height = firstLayer.frame().height();
+			} else {
+				// Multiple layers selected
+				var bounds = MSLayerGroup.groupBoundsForLayers(selectedLayers);
+				var posX   = bounds.origin.x;
+				var posY   = bounds.origin.y;
+				var width  = bounds.size.width;
+				var height = bounds.size.height;
+			}
+
+			var subPaddingX = 0;
+			var subPaddingY = 0;
+			var paddingX    = options.padding * 2;
+			var paddingY    = options.padding * 2;
+
+			// If the square option is chosen, we'll also want to add some
+			// substitute padding to ensure both sides are equal
+			if (options.square == 'Yes') {
+				if (width > height) {
+					subPaddingY = (width - height);
+				} else {
+					subPaddingX = (height - width);
+				}
+			}
+
+			// Add padding
+			paddingWidth  = paddingX + subPaddingX;
+			paddingHeight = paddingY + subPaddingY;
+			width         = width + paddingWidth;
+			height        = height + paddingHeight;
+
+			//if (options.move == 'Move Contents') {
+				//if (selectedCount == 1) {
+					//firstLayer.frame().addX(paddingWidth / 2);
+					//firstLayer.frame().addY(paddingHeight / 2);
+				//} else {
+					//for (var i = 0; i < selectedCount; i++){
+						//var item = selectedLayers[i];
+
+						//item.frame().addX(paddingWidth / 2);
+						//item.frame().addY(paddingHeight / 2);
+					//}
+				//}
+			//} else {
+				//posX = posX - (paddingWidth / 2);
+				//posY = posY - (paddingHeight / 2);
+			//}
+
+			// force Move Box
+			posX = posX - (paddingWidth / 2);
+			posY = posY - (paddingHeight / 2);
+
+			var rect = MSRectangleShape.alloc().init();
+			rect.frame = MSRect.rectWithRect(NSMakeRect(posX, posY, width, height));
+
+			var shapeGroup = MSShapeGroup.shapeWithPath(rect);
+			//shapeGroup.style().fills().addNewStylePart();
+
+			// set name
+			shapeGroup.setName("Bound");
+
+			// for remove item and add shapeGroup to bottom
+			for (var i = 0; i < selectedCount; i++){
+				var item = selectedLayers[i];
+				artboard.removeLayer(item);
+				//itemGroup.addLayer(item);
+			}
+			artboard.addLayers([shapeGroup]);
+
+			if (selectedCount == 1) {
+				firstLayer.setIsSelected(false);
+			} else {
+				for (var i = 0; i < selectedCount; i++){
+					var item = selectedLayers[i];
+
+					item.setIsSelected(false);
+					//item.setIsSelected(true);
+
+					artboard.addLayers([item]);
+				}
+			}
+			//shapeGroup.setIsSelected(true);
+			shapeGroup.setIsSelected(false);
+
+			// // // // // GROUP // // // // //
+			var group = MSLayerGroup.new();
+      var groupFrame = group.frame();
+      groupFrame.setConstrainProportions(false);
+      group.setName('GroupLayer');
+			group.addLayers([shapeGroup]);
+			for (var i = 0; i < selectedCount; i++){
+				var item = selectedLayers[i];
+	      artboard.removeLayer(item);
+				group.addLayers([item]);
+			}
+			artboard.removeLayer(shapeGroup);
+			artboard.addLayers([group]);
+			group.setIsSelected(true);
+			group.resizeToFitChildrenWithOption(false);
+		}
+	}
+
+	/**
+	 * Build dialog window with appropriate options
+	 * @return {COSAlertWindow} The alert window requesting input
+	 */
+    function buildDialog() {
+    	var alert = COSAlertWindow.new();
+
+		alert.setMessageText('Bound');
+
+		alert.setInformativeText('Choose padding and offset options');
+
+		alert.addTextLabelWithValue('Enter padding amount');
+		alert.addTextFieldWithValue('0');
+
+		//alert.addTextLabelWithValue('If you have specified padding, would you like to move the contents to match the box, or move the box and leave the contents where they are?');
+		//var choosePropertyOptions = ['Move Contents', 'Move Box'];
+		//var choosePropertySelect  = createSelect(choosePropertyOptions, 0);
+
+		//alert.addAccessoryView(choosePropertySelect);
+
+		alert.addTextLabelWithValue('Do you want to force the box to be square?');
+
+		var chooseRatioOptions = ['No', 'Yes'];
+		var chooseRatioSelect  = createSelect(chooseRatioOptions, 0);
+
+		alert.addAccessoryView(chooseRatioSelect);
+
+		alert.addButtonWithTitle('OK');
+		alert.addButtonWithTitle('Cancel');
+
+		return alert;
+    }
+
+	/**
+	 * Create Select Box
+	 * @param  {Array}      options           Options for the select
+	 * @param  {Int}        selectedItemIndex Default selected item
+	 * @return {NSComboBox}                   Complete select box
+	 */
+	function createSelect(options, selectedItemIndex) {
+		selectedItemIndex = selectedItemIndex || 0;
+
+		var select = NSComboBox.alloc().initWithFrame(NSMakeRect(0,0,200,25));
+		select.addItemsWithObjectValues(options);
+		select.selectItemAtIndex(selectedItemIndex);
+
+		return select;
+	}
+
+	/**
+	 * Collect user input from alert window
+	 * @param  {COSAlertWindow} alert             The alert window
+	 * @param  {Int}            responseCode      Alert window response code
+	 * @return {Object}                           Alert window results
+	 */
+	function handleAlertResponse(alert, responseCode) {
+	    if (responseCode == "1000") {
+	        return {
+	        	//padding : alert.viewAtIndex(1).stringValue(),
+	        	//move    : alert.viewAtIndex(3).stringValue(),
+						//square  : alert.viewAtIndex(5).stringValue()
+						padding : alert.viewAtIndex(1).stringValue(),
+						square  : alert.viewAtIndex(3).stringValue()
+	        };
+	    }
+
+    	return null;
+    }
+};
