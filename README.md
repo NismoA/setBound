@@ -1,4 +1,4 @@
-#setBound
+#🅱️ set Bound
 Plug in for creating Bound to desired Object and bring bound layer to the bottom also provide auto group function.
 
 <img src="https://media.giphy.com/media/3oGRFG10B3rPdww6Gs/giphy.gif"/>
